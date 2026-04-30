@@ -20,6 +20,7 @@ function App() {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [incidentToEdit, setIncidentToEdit] = useState<Incident | null>(null)
   const deletedIncidentRef = useRef<Incident | null>(null)
+  const deletedIncidentsRef = useRef<Incident[]>([])
   const undoToastIdRef = useRef<string | number | null>(null)
 
   const safeIncidents = incidents || []
@@ -104,6 +105,46 @@ function App() {
     }
   }
 
+  const handleBulkDelete = (incidentsToDelete: Incident[]) => {
+    deletedIncidentsRef.current = incidentsToDelete
+    const deletedIds = new Set(incidentsToDelete.map(i => i.id))
+
+    setIncidents((current) =>
+      (current || []).filter((inc) => !deletedIds.has(inc.id))
+    )
+
+    if (undoToastIdRef.current) {
+      toast.dismiss(undoToastIdRef.current)
+    }
+
+    undoToastIdRef.current = toast.success(
+      `${incidentsToDelete.length} incidents deleted`,
+      {
+        description: `You can undo this action`,
+        duration: 10000,
+        action: {
+          label: 'Undo',
+          onClick: () => handleUndoBulkDelete(),
+        },
+      }
+    )
+  }
+
+  const handleUndoBulkDelete = () => {
+    if (deletedIncidentsRef.current.length > 0) {
+      const restoredIncidents = deletedIncidentsRef.current
+
+      setIncidents((current) => [...(current || []), ...restoredIncidents])
+
+      toast.success(`${restoredIncidents.length} incidents restored`, {
+        description: `All incidents have been recovered`,
+      })
+
+      deletedIncidentsRef.current = []
+      undoToastIdRef.current = null
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Toaster richColors position="top-right" />
@@ -155,6 +196,7 @@ function App() {
               incidents={safeIncidents} 
               onEditIncident={handleEditIncident}
               onDeleteIncident={handleDeleteIncident}
+              onBulkDelete={handleBulkDelete}
             />
           </TabsContent>
 
