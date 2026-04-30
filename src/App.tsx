@@ -1,9 +1,8 @@
 import { useState, useMemo, useRef } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Toaster, toast } from 'sonner'
-import { Plus, ChartBar, Warning, ListBullets, Network, ArrowCounterClockwise } from '@phosphor-icons/react'
+import { Plus, ChartBar, Warning, ListBullets, Network, GithubLogo } from '@phosphor-icons/react'
 import { QuickAddDialog } from '@/components/QuickAddDialog'
 import { EditIncidentDialog } from '@/components/EditIncidentDialog'
 import { Dashboard } from '@/components/Dashboard'
@@ -12,10 +11,11 @@ import { RootCausesView } from '@/components/RootCausesView'
 import { RootCauseGraph } from '@/components/RootCauseGraph'
 import type { Incident } from '@/lib/types'
 import { getUniqueValues, getAllRootCauses, getAllTopics, getRootCauseCounts } from '@/lib/data-utils'
+import { useLocalStorageState } from '@/hooks/use-local-storage-state'
 import { ulid } from 'ulid'
 
 function App() {
-  const [incidents, setIncidents] = useKV<Incident[]>('rca-incidents', [])
+  const [incidents, setIncidents] = useLocalStorageState<Incident[]>('rca-incidents', [])
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [incidentToEdit, setIncidentToEdit] = useState<Incident | null>(null)
@@ -66,6 +66,21 @@ function App() {
     )
     toast.success('Incident updated successfully', {
       description: `Problem: ${updatedIncident.problem}`,
+    })
+  }
+
+  const handleBulkUpdate = (incidentIds: string[], updates: Partial<Pick<Incident, 'status' | 'impact'>>) => {
+    const selectedIds = new Set(incidentIds)
+
+    setIncidents((current) =>
+      (current || []).map((incident) =>
+        selectedIds.has(incident.id) ? { ...incident, ...updates } : incident
+      )
+    )
+
+    const changedFields = Object.keys(updates).join(' and ')
+    toast.success(`${incidentIds.length} incidents updated`, {
+      description: `Updated ${changedFields}`,
     })
   }
 
@@ -158,10 +173,22 @@ function App() {
                 IT Operations Incident Tracker
               </p>
             </div>
-            <Button onClick={() => setQuickAddOpen(true)} size="lg" className="gap-2">
-              <Plus className="h-5 w-5" weight="bold" />
-              Add Incident
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="lg" className="gap-2" asChild>
+                <a
+                  href="https://github.com/voku/root-cause-analysis"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <GithubLogo className="h-5 w-5" weight="bold" />
+                  Contribute
+                </a>
+              </Button>
+              <Button onClick={() => setQuickAddOpen(true)} size="lg" className="gap-2">
+                <Plus className="h-5 w-5" weight="bold" />
+                Add Incident
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -197,6 +224,7 @@ function App() {
               onEditIncident={handleEditIncident}
               onDeleteIncident={handleDeleteIncident}
               onBulkDelete={handleBulkDelete}
+              onBulkUpdate={handleBulkUpdate}
             />
           </TabsContent>
 

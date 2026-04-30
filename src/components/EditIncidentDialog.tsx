@@ -34,6 +34,7 @@ export function EditIncidentDialog({
   const [rootCauses, setRootCauses] = useState<string[]>([])
   const [topics, setTopics] = useState<string[]>([])
   const [fix, setFix] = useState('')
+  const [description, setDescription] = useState('')
   const [status, setStatus] = useState<IncidentStatus>('Open')
   const [impact, setImpact] = useState<ImpactLevel>('Medium')
   const [currentField, setCurrentField] = useState<'problem' | 'rootCause' | 'topic' | 'fix' | null>(null)
@@ -45,6 +46,7 @@ export function EditIncidentDialog({
       setRootCauses(incident.rootCauses)
       setTopics(incident.topics)
       setFix(incident.fix)
+      setDescription(incident.description || '')
       setStatus(incident.status)
       setImpact(incident.impact)
       setCurrentField(null)
@@ -54,6 +56,7 @@ export function EditIncidentDialog({
       setRootCauses([])
       setTopics([])
       setFix('')
+      setDescription('')
       setStatus('Open')
       setImpact('Medium')
       setCurrentField(null)
@@ -72,6 +75,7 @@ export function EditIncidentDialog({
       rootCauses,
       topics,
       fix,
+      description: description.trim() || undefined,
       status,
       impact,
     })
@@ -291,6 +295,18 @@ export function EditIncidentDialog({
                 <option>Critical</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2 block">
+              Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              className="w-full min-h-24 px-3 py-2 rounded-md border border-input bg-background text-sm"
+              placeholder="Update context, symptoms, timeline, or related notes..."
+            />
           </div>
 
           {currentField && (

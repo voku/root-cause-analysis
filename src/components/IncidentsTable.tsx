@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react'
+import { MouseEvent, useMemo, useState } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Funnel, CaretUp, CaretDown, PencilSimple, Trash } from '@phosphor-icons/react'
+import { Funnel, CaretUp, CaretDown, PencilSimple, Trash, DownloadSimple } from '@phosphor-icons/react'
 import type { Incident, ImpactLevel, IncidentStatus } from '@/lib/types'
 import { formatDate, getAllTopics } from '@/lib/data-utils'
 
@@ -14,12 +14,40 @@ interface IncidentsTableProps {
   onEditIncident: (incident: Incident) => void
   onDeleteIncident: (incident: Incident) => void
   onBulkDelete?: (incidents: Incident[]) => void
+  onBulkUpdate?: (incidentIds: string[], updates: Partial<Pick<Incident, 'status' | 'impact'>>) => void
 }
 
 type SortField = 'createdAt' | 'problem' | 'impact' | 'status'
 type SortDirection = 'asc' | 'desc'
+type ExportFormat = 'csv' | 'json'
 
-export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, onBulkDelete }: IncidentsTableProps) {
+const STATUS_VALUES: IncidentStatus[] = ['Open', 'In Progress', 'Resolved', 'Closed']
+const IMPACT_VALUES: ImpactLevel[] = ['Low', 'Medium', 'High', 'Critical']
+
+function downloadFile(filename: string, contents: string, mimeType: string) {
+  const blob = new Blob([contents], { type: mimeType })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+function csvEscape(value: unknown): string {
+  const normalized = Array.isArray(value) ? value.join('; ') : String(value ?? '')
+  return `"${normalized.replace(/"/g, '""')}"`
+}
+
+function incidentsToCsv(incidents: Incident[]): string {
+  const headers: (keyof Incident)[] = ['id', 'createdAt', 'problem', 'description', 'topics', 'rootCauses', 'fix', 'status', 'impact']
+  const rows = incidents.map((incident) => headers.map((header) => csvEscape(incident[header])).join(','))
+  return [headers.join(','), ...rows].join('\n')
+}
+
+export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, onBulkDelete, onBulkUpdate }: IncidentsTableProps) {
   const [statusFilter, setStatusFilter] = useState<IncidentStatus | 'All'>('All')
   const [impactFilter, setImpactFilter] = useState<ImpactLevel | 'All'>('All')
   const [topicFilter, setTopicFilter] = useState<string>('All')
@@ -29,6 +57,9 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
   const [incidentToDelete, setIncidentToDelete] = useState<Incident | null>(null)
   const [selectedIncidents, setSelectedIncidents] = useState<Set<string>>(new Set())
+  const [lastSelectedIncidentId, setLastSelectedIncidentId] = useState<string | null>(null)
+  const [bulkStatus, setBulkStatus] = useState<IncidentStatus | 'No change'>('No change')
+  const [bulkImpact, setBulkImpact] = useState<ImpactLevel | 'No change'>('No change')
 
   const allTopics = useMemo(() => getAllTopics(incidents), [incidents])
 
@@ -58,8 +89,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
           comparison = a.problem.localeCompare(b.problem)
           break
         case 'impact':
-          const impactOrder: Record<ImpactLevel, number> = { Low: 0, Medium: 1, High: 2, Critical: 3 }
-          comparison = impactOrder[a.impact] - impactOrder[b.impact]
+          comparison = IMPACT_VALUES.indexOf(a.impact) - IMPACT_VALUES.indexOf(b.impact)
           break
         case 'status':
           comparison = a.status.localeCompare(b.status)
@@ -71,6 +101,15 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
 
     return sorted
   }, [incidents, statusFilter, impactFilter, topicFilter, sortField, sortDirection])
+
+  const selectedIncidentsList = useMemo(() => {
+    return incidents.filter(i => selectedIncidents.has(i.id))
+  }, [incidents, selectedIncidents])
+
+  const selectedVisibleCount = filteredAndSortedIncidents.filter((incident) => selectedIncidents.has(incident.id)).length
+  const allSelected = filteredAndSortedIncidents.length > 0 && selectedVisibleCount === filteredAndSortedIncidents.length
+  const hasActiveFilters = statusFilter !== 'All' || impactFilter !== 'All' || topicFilter !== 'All'
+  const canApplyBulkEdit = selectedIncidents.size > 0 && (bulkStatus !== 'No change' || bulkImpact !== 'No change')
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -110,8 +149,6 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
     )
   }
 
-  const hasActiveFilters = statusFilter !== 'All' || impactFilter !== 'All' || topicFilter !== 'All'
-
   const handleDeleteClick = (incident: Incident) => {
     setIncidentToDelete(incident)
     setDeleteDialogOpen(true)
@@ -125,23 +162,49 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
     setIncidentToDelete(null)
   }
 
-  const toggleSelectIncident = (incidentId: string) => {
+  const toggleSelectIncident = (incidentId: string, shiftKey = false) => {
     setSelectedIncidents((prev) => {
-      const newSet = new Set(prev)
-      if (newSet.has(incidentId)) {
-        newSet.delete(incidentId)
-      } else {
-        newSet.add(incidentId)
+      const next = new Set(prev)
+      const shouldSelect = !next.has(incidentId)
+
+      if (shiftKey && lastSelectedIncidentId) {
+        const currentIndex = filteredAndSortedIncidents.findIndex((incident) => incident.id === incidentId)
+        const lastIndex = filteredAndSortedIncidents.findIndex((incident) => incident.id === lastSelectedIncidentId)
+
+        if (currentIndex !== -1 && lastIndex !== -1) {
+          const [start, end] = [currentIndex, lastIndex].sort((a, b) => a - b)
+          filteredAndSortedIncidents.slice(start, end + 1).forEach((incident) => {
+            if (shouldSelect) {
+              next.add(incident.id)
+            } else {
+              next.delete(incident.id)
+            }
+          })
+          return next
+        }
       }
-      return newSet
+
+      if (shouldSelect) {
+        next.add(incidentId)
+      } else {
+        next.delete(incidentId)
+      }
+      return next
     })
+    setLastSelectedIncidentId(incidentId)
+  }
+
+  const handleCheckboxClick = (event: MouseEvent<HTMLButtonElement>, incidentId: string) => {
+    event.preventDefault()
+    toggleSelectIncident(incidentId, event.shiftKey)
   }
 
   const toggleSelectAll = () => {
-    if (selectedIncidents.size === filteredAndSortedIncidents.length) {
-      setSelectedIncidents(new Set())
+    if (allSelected) {
+      const visibleIds = new Set(filteredAndSortedIncidents.map(i => i.id))
+      setSelectedIncidents((prev) => new Set([...prev].filter((id) => !visibleIds.has(id))))
     } else {
-      setSelectedIncidents(new Set(filteredAndSortedIncidents.map(i => i.id)))
+      setSelectedIncidents((prev) => new Set([...prev, ...filteredAndSortedIncidents.map(i => i.id)]))
     }
   }
 
@@ -157,41 +220,98 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
       onBulkDelete(incidentsToDelete)
     }
     setSelectedIncidents(new Set())
+    setLastSelectedIncidentId(null)
     setBulkDeleteDialogOpen(false)
   }
 
-  const selectedIncidentsList = useMemo(() => {
-    return incidents.filter(i => selectedIncidents.has(i.id))
-  }, [incidents, selectedIncidents])
+  const handleBulkUpdate = () => {
+    if (!onBulkUpdate || !canApplyBulkEdit) return
 
-  const allSelected = filteredAndSortedIncidents.length > 0 && 
-    selectedIncidents.size === filteredAndSortedIncidents.length
+    const updates: Partial<Pick<Incident, 'status' | 'impact'>> = {}
+    if (bulkStatus !== 'No change') updates.status = bulkStatus
+    if (bulkImpact !== 'No change') updates.impact = bulkImpact
+
+    onBulkUpdate([...selectedIncidents], updates)
+    setBulkStatus('No change')
+    setBulkImpact('No change')
+  }
+
+  const handleExport = (format: ExportFormat) => {
+    if (selectedIncidentsList.length === 0) return
+
+    const timestamp = new Date().toISOString().slice(0, 10)
+    if (format === 'json') {
+      downloadFile(`selected-incidents-${timestamp}.json`, JSON.stringify(selectedIncidentsList, null, 2), 'application/json')
+      return
+    }
+
+    downloadFile(`selected-incidents-${timestamp}.csv`, incidentsToCsv(selectedIncidentsList), 'text/csv')
+  }
 
   return (
     <div className="space-y-4">
       {selectedIncidents.size > 0 && (
-        <div className="bg-accent/10 border border-accent rounded-lg px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="font-medium text-accent-foreground">
-              {selectedIncidents.size} incident{selectedIncidents.size !== 1 ? 's' : ''} selected
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedIncidents(new Set())}
-            >
-              Clear selection
-            </Button>
+        <div className="bg-accent/10 border border-accent rounded-lg px-4 py-3 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="font-medium text-accent-foreground">
+                {selectedIncidents.size} incident{selectedIncidents.size !== 1 ? 's' : ''} selected
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelectedIncidents(new Set())
+                  setLastSelectedIncidentId(null)
+                }}
+              >
+                Clear selection
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => handleExport('csv')} className="gap-2">
+                <DownloadSimple className="h-4 w-4" />
+                Export CSV
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleExport('json')} className="gap-2">
+                <DownloadSimple className="h-4 w-4" />
+                Export JSON
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleBulkDeleteClick} className="gap-2">
+                <Trash className="h-4 w-4" />
+                Delete Selected
+              </Button>
+            </div>
           </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleBulkDeleteClick}
-            className="gap-2"
-          >
-            <Trash className="h-4 w-4" />
-            Delete Selected
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium">Bulk edit:</span>
+            <Select value={bulkStatus} onValueChange={(value) => setBulkStatus(value as IncidentStatus | 'No change')}>
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="No change">Status: no change</SelectItem>
+                {STATUS_VALUES.map((status) => (
+                  <SelectItem key={status} value={status}>{status}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={bulkImpact} onValueChange={(value) => setBulkImpact(value as ImpactLevel | 'No change')}>
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="Impact" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="No change">Impact: no change</SelectItem>
+                {IMPACT_VALUES.map((impact) => (
+                  <SelectItem key={impact} value={impact}>{impact}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button size="sm" onClick={handleBulkUpdate} disabled={!canApplyBulkEdit}>
+              Apply to selected
+            </Button>
+            <span className="text-xs text-muted-foreground">Tip: Shift+Click checkboxes to select a range.</span>
+          </div>
         </div>
       )}
 
@@ -208,9 +328,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
           <SelectContent>
             <SelectItem value="All">All Topics</SelectItem>
             {allTopics.map(topic => (
-              <SelectItem key={topic} value={topic}>
-                {topic}
-              </SelectItem>
+              <SelectItem key={topic} value={topic}>{topic}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -221,10 +339,9 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="All">All Status</SelectItem>
-            <SelectItem value="Open">Open</SelectItem>
-            <SelectItem value="In Progress">In Progress</SelectItem>
-            <SelectItem value="Resolved">Resolved</SelectItem>
-            <SelectItem value="Closed">Closed</SelectItem>
+            {STATUS_VALUES.map((status) => (
+              <SelectItem key={status} value={status}>{status}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -234,10 +351,9 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="All">All Impact</SelectItem>
-            <SelectItem value="Low">Low</SelectItem>
-            <SelectItem value="Medium">Medium</SelectItem>
-            <SelectItem value="High">High</SelectItem>
-            <SelectItem value="Critical">Critical</SelectItem>
+            {IMPACT_VALUES.map((impact) => (
+              <SelectItem key={impact} value={impact}>{impact}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -265,49 +381,21 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]">
-                <Checkbox
-                  checked={allSelected}
-                  onCheckedChange={toggleSelectAll}
-                  aria-label="Select all incidents"
-                />
+                <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} aria-label="Select all visible incidents" />
               </TableHead>
-              <TableHead
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort('createdAt')}
-              >
-                <div className="flex items-center gap-2">
-                  Date
-                  <SortIcon field="createdAt" />
-                </div>
+              <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('createdAt')}>
+                <div className="flex items-center gap-2">Date<SortIcon field="createdAt" /></div>
               </TableHead>
-              <TableHead
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort('problem')}
-              >
-                <div className="flex items-center gap-2">
-                  Problem
-                  <SortIcon field="problem" />
-                </div>
+              <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('problem')}>
+                <div className="flex items-center gap-2">Problem<SortIcon field="problem" /></div>
               </TableHead>
               <TableHead>Topic</TableHead>
               <TableHead>Root Causes</TableHead>
-              <TableHead
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort('status')}
-              >
-                <div className="flex items-center gap-2">
-                  Status
-                  <SortIcon field="status" />
-                </div>
+              <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('status')}>
+                <div className="flex items-center gap-2">Status<SortIcon field="status" /></div>
               </TableHead>
-              <TableHead
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort('impact')}
-              >
-                <div className="flex items-center gap-2">
-                  Impact
-                  <SortIcon field="impact" />
-                </div>
+              <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('impact')}>
+                <div className="flex items-center gap-2">Impact<SortIcon field="impact" /></div>
               </TableHead>
               <TableHead>Fix</TableHead>
               <TableHead className="w-[100px]"></TableHead>
@@ -316,9 +404,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
           <TableBody>
             {filteredAndSortedIncidents.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                  No incidents found
-                </TableCell>
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">No incidents found</TableCell>
               </TableRow>
             ) : (
               filteredAndSortedIncidents.map(incident => (
@@ -326,61 +412,36 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
                   <TableCell>
                     <Checkbox
                       checked={selectedIncidents.has(incident.id)}
-                      onCheckedChange={() => toggleSelectIncident(incident.id)}
+                      onClick={(event) => handleCheckboxClick(event, incident.id)}
                       aria-label={`Select incident ${incident.problem}`}
                     />
                   </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {formatDate(incident.createdAt)}
+                  <TableCell className="font-mono text-sm">{formatDate(incident.createdAt)}</TableCell>
+                  <TableCell className="font-medium">
+                    <div>{incident.problem}</div>
+                    {incident.description && (
+                      <div className="text-xs text-muted-foreground font-normal line-clamp-2 mt-1">{incident.description}</div>
+                    )}
                   </TableCell>
-                  <TableCell className="font-medium">{incident.problem}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {incident.topics.map(topic => (
-                        <Badge key={topic} variant="secondary" className="text-xs">
-                          {topic}
-                        </Badge>
-                      ))}
+                      {incident.topics.map(topic => <Badge key={topic} variant="secondary" className="text-xs">{topic}</Badge>)}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {incident.rootCauses.map(cause => (
-                        <Badge key={cause} variant="default" className="text-xs">
-                          {cause}
-                        </Badge>
-                      ))}
+                      {incident.rootCauses.map(cause => <Badge key={cause} variant="default" className="text-xs">{cause}</Badge>)}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <Badge className={`${getStatusColor(incident.status)} text-xs`}>
-                      {incident.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={`${getImpactColor(incident.impact)} text-xs`}>
-                      {incident.impact}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {incident.fix || '-'}
-                  </TableCell>
+                  <TableCell><Badge className={`${getStatusColor(incident.status)} text-xs`}>{incident.status}</Badge></TableCell>
+                  <TableCell><Badge className={`${getImpactColor(incident.impact)} text-xs`}>{incident.impact}</Badge></TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{incident.fix || '-'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => onEditIncident(incident)}
-                      >
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEditIncident(incident)} aria-label={`Edit ${incident.problem}`}>
                         <PencilSimple className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => handleDeleteClick(incident)}
-                      >
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteClick(incident)} aria-label={`Delete ${incident.problem}`}>
                         <Trash className="h-4 w-4" />
                       </Button>
                     </div>
@@ -402,11 +463,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
                 <div className="mt-4 p-3 bg-muted rounded-md space-y-2">
                   <div className="font-medium text-foreground">{incidentToDelete.problem}</div>
                   <div className="text-sm flex flex-wrap gap-1">
-                    {incidentToDelete.rootCauses.map(cause => (
-                      <Badge key={cause} variant="default" className="text-xs">
-                        {cause}
-                      </Badge>
-                    ))}
+                    {incidentToDelete.rootCauses.map(cause => <Badge key={cause} variant="default" className="text-xs">{cause}</Badge>)}
                   </div>
                 </div>
               )}
@@ -414,12 +471,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -429,23 +481,14 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Multiple Incidents</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {selectedIncidents.size} incident{selectedIncidents.size !== 1 ? 's' : ''}? 
-              You can undo this action immediately after deletion.
+              Are you sure you want to delete {selectedIncidents.size} incident{selectedIncidents.size !== 1 ? 's' : ''}? You can undo this action immediately after deletion.
               <div className="mt-4 p-3 bg-muted rounded-md max-h-48 overflow-y-auto space-y-2">
                 {selectedIncidentsList.map((incident) => (
                   <div key={incident.id} className="text-sm text-foreground flex items-start gap-2">
                     <span className="font-medium min-w-0 flex-1">{incident.problem}</span>
                     <div className="flex flex-wrap gap-1">
-                      {incident.rootCauses.slice(0, 2).map(cause => (
-                        <Badge key={cause} variant="secondary" className="text-xs">
-                          {cause}
-                        </Badge>
-                      ))}
-                      {incident.rootCauses.length > 2 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{incident.rootCauses.length - 2}
-                        </Badge>
-                      )}
+                      {incident.rootCauses.slice(0, 2).map(cause => <Badge key={cause} variant="secondary" className="text-xs">{cause}</Badge>)}
+                      {incident.rootCauses.length > 2 && <Badge variant="secondary" className="text-xs">+{incident.rootCauses.length - 2}</Badge>}
                     </div>
                   </div>
                 ))}
@@ -454,10 +497,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmBulkDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={confirmBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete {selectedIncidents.size} Incident{selectedIncidents.size !== 1 ? 's' : ''}
             </AlertDialogAction>
           </AlertDialogFooter>

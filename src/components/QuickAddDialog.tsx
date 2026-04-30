@@ -32,6 +32,7 @@ export function QuickAddDialog({
   const [rootCauses, setRootCauses] = useState<string[]>([])
   const [topics, setTopics] = useState<string[]>([])
   const [fix, setFix] = useState('')
+  const [description, setDescription] = useState('')
   const [status, setStatus] = useState<IncidentStatus>('Open')
   const [impact, setImpact] = useState<ImpactLevel>('Medium')
   const [currentField, setCurrentField] = useState<'problem' | 'rootCause' | 'topic' | 'fix'>('problem')
@@ -43,6 +44,7 @@ export function QuickAddDialog({
       setRootCauses([])
       setTopics([])
       setFix('')
+      setDescription('')
       setStatus('Open')
       setImpact('Medium')
       setCurrentField('problem')
@@ -60,6 +62,7 @@ export function QuickAddDialog({
       rootCauses,
       topics,
       fix,
+      description: description.trim() || undefined,
       status,
       impact,
     })
@@ -276,6 +279,18 @@ export function QuickAddDialog({
                 <option>Critical</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2 block">
+              Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              className="w-full min-h-24 px-3 py-2 rounded-md border border-input bg-background text-sm"
+              placeholder="Add context, symptoms, timeline, or related notes..."
+            />
           </div>
 
           {currentField && (
