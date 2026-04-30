@@ -142,7 +142,7 @@ export function EditIncidentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-h-[calc(100vh-2rem)] max-w-2xl overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold tracking-tight">Edit Incident</DialogTitle>
         </DialogHeader>
@@ -264,7 +264,7 @@ export function EditIncidentDialog({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2 block">
                 Status

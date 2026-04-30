@@ -197,41 +197,42 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen overflow-x-hidden bg-background">
       <Toaster richColors position="top-right" />
 
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Root Cause Analysis</h1>
+        <div className="container mx-auto px-4 py-4 sm:px-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Root Cause Analysis</h1>
               <p className="text-sm text-muted-foreground mt-1">
                 IT Operations Incident Tracker
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="lg" className="gap-2" asChild>
+            <div className="flex w-full items-stretch gap-2 sm:w-auto sm:items-center">
+              <Button variant="outline" size="lg" className="min-w-0 flex-1 gap-2 px-3 sm:flex-none sm:px-4" asChild>
                 <a
                   href="https://github.com/voku/root-cause-analysis"
                   target="_blank"
                   rel="noreferrer"
+                  aria-label="Contribute on GitHub"
                 >
                   <GithubLogo className="h-5 w-5" weight="bold" />
-                  Contribute
+                  <span className="truncate">Contribute</span>
                 </a>
               </Button>
-              <Button onClick={() => setQuickAddOpen(true)} size="lg" className="gap-2">
+              <Button onClick={() => setQuickAddOpen(true)} size="lg" className="flex-1 gap-2 px-3 sm:flex-none sm:px-4">
                 <Plus className="h-5 w-5" weight="bold" />
-                Add Incident
+                <span className="truncate">Add Incident</span>
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+      <main className="container mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <Tabs defaultValue="dashboard" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl p-1 md:max-w-2xl md:grid-cols-4">
             <TabsTrigger value="dashboard" className="gap-2">
               <ChartBar className="h-4 w-4" />
               Dashboard

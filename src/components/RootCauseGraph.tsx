@@ -443,9 +443,9 @@ export function RootCauseGraph({ incidents }: RootCauseGraphProps) {
 
   return (
     <div className="space-y-4">
-      <Card className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div>
+      <Card className="p-4 sm:p-6">
+        <div className="mb-4 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="min-w-0">
             <h3 className="text-lg font-semibold tracking-tight flex items-center gap-2 mb-2">
               <Network className="h-5 w-5 text-primary" weight="bold" />
               System Dependency Graph
@@ -454,7 +454,7 @@ export function RootCauseGraph({ incidents }: RootCauseGraphProps) {
               Interactive visualization showing how root causes connect across topics and problems
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
               <Switch 
                 id="timeline-toggle" 
@@ -466,23 +466,23 @@ export function RootCauseGraph({ incidents }: RootCauseGraphProps) {
                 Timeline
               </Label>
             </div>
-            <div className="h-6 w-px bg-border" />
-            <Button variant="outline" size="sm" onClick={handleZoomOut}>
+            <div className="hidden h-6 w-px bg-border sm:block" />
+            <Button variant="outline" size="sm" onClick={handleZoomOut} aria-label="Zoom out">
               <MagnifyingGlassMinus className="h-4 w-4" />
             </Button>
             <Badge variant="secondary" className="font-mono px-3">
               {(zoom * 100).toFixed(0)}%
             </Badge>
-            <Button variant="outline" size="sm" onClick={handleZoomIn}>
+            <Button variant="outline" size="sm" onClick={handleZoomIn} aria-label="Zoom in">
               <MagnifyingGlassPlus className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={handleReset}>
+            <Button variant="outline" size="sm" onClick={handleReset} aria-label="Reset zoom">
               <ArrowsOutSimple className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        <div className="relative bg-muted/30 rounded-lg border overflow-hidden" style={{ height: '600px' }}>
+        <div className="relative h-[420px] overflow-hidden rounded-lg border bg-muted/30 sm:h-[520px] lg:h-[600px]">
           <svg
             ref={svgRef}
             width="100%"
@@ -490,7 +490,7 @@ export function RootCauseGraph({ incidents }: RootCauseGraphProps) {
             style={{ cursor: 'grab' }}
           />
           
-          <div className="absolute bottom-4 left-4 flex items-center gap-4 bg-card/95 backdrop-blur-sm px-4 py-2 rounded-lg border shadow-sm">
+          <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center gap-3 rounded-lg border bg-card/95 px-4 py-2 shadow-sm backdrop-blur-sm sm:right-auto">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded-full" style={{ backgroundColor: 'oklch(0.75 0.15 195)' }} />
               <span className="text-xs font-medium">Topics</span>
@@ -506,7 +506,7 @@ export function RootCauseGraph({ incidents }: RootCauseGraphProps) {
           </div>
 
           {selectedNode && (
-            <div className="absolute top-4 right-4 bg-card/95 backdrop-blur-sm p-4 rounded-lg border shadow-lg max-w-xs">
+            <div className="absolute top-4 right-4 left-4 sm:left-auto sm:max-w-xs rounded-lg border bg-card/95 p-4 shadow-lg backdrop-blur-sm">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <Badge variant={
                   selectedNode.type === 'topic' ? 'default' : 
@@ -524,7 +524,7 @@ export function RootCauseGraph({ incidents }: RootCauseGraphProps) {
                   ×
                 </button>
               </div>
-              <div className="font-semibold mb-2 text-sm">{selectedNode.label}</div>
+              <div className="mb-2 break-words text-sm font-semibold">{selectedNode.label}</div>
               <div className="text-xs text-muted-foreground">
                 {selectedNode.count} {selectedNode.count === 1 ? 'incident' : 'incidents'}
               </div>
@@ -538,7 +538,7 @@ export function RootCauseGraph({ incidents }: RootCauseGraphProps) {
       </Card>
 
       {showTimeline && (
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <div className="mb-4">
             <h3 className="text-sm font-semibold tracking-tight flex items-center gap-2 mb-1">
               <ChartLine className="h-4 w-4 text-accent" weight="bold" />
@@ -548,7 +548,7 @@ export function RootCauseGraph({ incidents }: RootCauseGraphProps) {
               Daily incident volume over time
             </p>
           </div>
-          <div className="relative bg-muted/30 rounded-lg border overflow-hidden" style={{ height: '180px' }}>
+          <div className="relative h-[180px] overflow-hidden rounded-lg border bg-muted/30 sm:h-[220px]">
             <svg
               ref={timelineRef}
               width="100%"

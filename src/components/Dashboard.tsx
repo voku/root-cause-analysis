@@ -28,8 +28,8 @@ export function Dashboard({ incidents }: DashboardProps) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-4 sm:p-6">
           <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
             <Warning className="h-4 w-4" />
             Top Root Causes
@@ -39,19 +39,19 @@ export function Dashboard({ incidents }: DashboardProps) {
               <p className="text-sm text-muted-foreground">No root causes yet</p>
             ) : (
               rootCauseCounts.map((cause, index) => (
-                <div key={cause.name} className="flex items-center justify-between group">
-                  <div className="flex items-center gap-3 flex-1">
+                <div key={cause.name} className="group flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
                     <span className="text-xs font-mono text-muted-foreground w-4">
                       {index + 1}
                     </span>
-                    <span className="text-sm font-medium group-hover:text-primary transition-colors">
+                    <span className="min-w-0 break-words text-sm font-medium transition-colors group-hover:text-primary">
                       {cause.name}
                     </span>
                     {cause.trend && (
                       <TrendIndicator trend={cause.trend} size="sm" />
                     )}
                   </div>
-                  <span className="text-2xl font-bold font-mono tabular-nums">
+                  <span className="text-xl font-mono font-bold tabular-nums sm:text-2xl">
                     {cause.count}
                   </span>
                 </div>
@@ -60,17 +60,17 @@ export function Dashboard({ incidents }: DashboardProps) {
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-accent/5 to-accent/10 border-accent/20">
+        <Card className="border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-4 sm:p-6">
           <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
             <Clock className="h-4 w-4" />
             Problems This Week
           </h3>
-          <div className="flex items-end gap-4">
-            <div className="text-6xl font-bold font-mono tabular-nums">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+            <div className="text-5xl font-mono font-bold tabular-nums sm:text-6xl">
               {thisWeekCount}
             </div>
             {lastWeekCount > 0 && (
-              <div className="flex items-center gap-2 pb-2">
+              <div className="flex flex-wrap items-center gap-2 sm:pb-2">
                 {isIncreasing ? (
                   <TrendUp className="h-5 w-5 text-critical" weight="bold" />
                 ) : (
@@ -86,7 +86,7 @@ export function Dashboard({ incidents }: DashboardProps) {
         </Card>
       </div>
 
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">
           Problems by Topic
         </h3>
@@ -98,10 +98,10 @@ export function Dashboard({ incidents }: DashboardProps) {
               const percentage = (topic.count / incidents.length) * 100
               return (
                 <div key={topic.name}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
                       <div className={`w-3 h-3 rounded ${topicColors[index % topicColors.length]}`} />
-                      <span className="text-sm font-medium">{topic.name}</span>
+                      <span className="min-w-0 break-words text-sm font-medium">{topic.name}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-muted-foreground">{percentage.toFixed(0)}%</span>

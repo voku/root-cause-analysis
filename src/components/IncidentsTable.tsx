@@ -251,8 +251,8 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
     <div className="space-y-4">
       {selectedIncidents.size > 0 && (
         <div className="bg-accent/10 border border-accent rounded-lg px-4 py-3 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
               <span className="font-medium text-accent-foreground">
                 {selectedIncidents.size} incident{selectedIncidents.size !== 1 ? 's' : ''} selected
               </span>
@@ -268,24 +268,24 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
               </Button>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => handleExport('csv')} className="gap-2">
+              <Button variant="outline" size="sm" onClick={() => handleExport('csv')} className="w-full gap-2 sm:w-auto">
                 <DownloadSimple className="h-4 w-4" />
                 Export CSV
               </Button>
-              <Button variant="outline" size="sm" onClick={() => handleExport('json')} className="gap-2">
+              <Button variant="outline" size="sm" onClick={() => handleExport('json')} className="w-full gap-2 sm:w-auto">
                 <DownloadSimple className="h-4 w-4" />
                 Export JSON
               </Button>
-              <Button variant="destructive" size="sm" onClick={handleBulkDeleteClick} className="gap-2">
+              <Button variant="destructive" size="sm" onClick={handleBulkDeleteClick} className="w-full gap-2 sm:w-auto">
                 <Trash className="h-4 w-4" />
                 Delete Selected
               </Button>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             <span className="text-sm font-medium">Bulk edit:</span>
             <Select value={bulkStatus} onValueChange={(value) => setBulkStatus(value as IncidentStatus | 'No change')}>
-              <SelectTrigger className="w-44">
+              <SelectTrigger className="w-full sm:w-44">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -296,7 +296,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
               </SelectContent>
             </Select>
             <Select value={bulkImpact} onValueChange={(value) => setBulkImpact(value as ImpactLevel | 'No change')}>
-              <SelectTrigger className="w-44">
+              <SelectTrigger className="w-full sm:w-44">
                 <SelectValue placeholder="Impact" />
               </SelectTrigger>
               <SelectContent>
@@ -306,7 +306,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
                 ))}
               </SelectContent>
             </Select>
-            <Button size="sm" onClick={handleBulkUpdate} disabled={!canApplyBulkEdit}>
+            <Button size="sm" onClick={handleBulkUpdate} disabled={!canApplyBulkEdit} className="w-full sm:w-auto">
               Apply to selected
             </Button>
             <span className="text-xs text-muted-foreground">Tip: Shift+Click checkboxes to select a range.</span>
@@ -314,14 +314,14 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Funnel className="h-4 w-4" />
           <span className="font-medium">Filters:</span>
         </div>
 
         <Select value={topicFilter} onValueChange={setTopicFilter}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Topic" />
           </SelectTrigger>
           <SelectContent>
@@ -333,7 +333,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
         </Select>
 
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as IncidentStatus | 'All')}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -345,7 +345,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
         </Select>
 
         <Select value={impactFilter} onValueChange={(v) => setImpactFilter(v as ImpactLevel | 'All')}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Impact" />
           </SelectTrigger>
           <SelectContent>
@@ -360,6 +360,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
           <Button
             variant="ghost"
             size="sm"
+            className="w-full sm:w-auto"
             onClick={() => {
               setStatusFilter('All')
               setImpactFilter('All')
@@ -370,7 +371,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
           </Button>
         )}
 
-        <div className="ml-auto text-sm text-muted-foreground font-mono">
+        <div className="text-sm text-muted-foreground font-mono sm:ml-auto">
           {filteredAndSortedIncidents.length} incidents
         </div>
       </div>
@@ -388,15 +389,15 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
               <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('problem')}>
                 <div className="flex items-center gap-2">Problem<SortIcon field="problem" /></div>
               </TableHead>
-              <TableHead>Topic</TableHead>
-              <TableHead>Root Causes</TableHead>
+              <TableHead className="hidden lg:table-cell">Topic</TableHead>
+              <TableHead className="hidden md:table-cell">Root Causes</TableHead>
               <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('status')}>
                 <div className="flex items-center gap-2">Status<SortIcon field="status" /></div>
               </TableHead>
               <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('impact')}>
                 <div className="flex items-center gap-2">Impact<SortIcon field="impact" /></div>
               </TableHead>
-              <TableHead>Fix</TableHead>
+              <TableHead className="hidden lg:table-cell">Fix</TableHead>
               <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -434,20 +435,39 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
                     {incident.description && (
                       <div className="text-xs text-muted-foreground font-normal line-clamp-2 mt-1">{incident.description}</div>
                     )}
+                    <div className="mt-2 flex flex-wrap gap-1 md:hidden">
+                      {incident.rootCauses.map((cause) => (
+                        <Badge key={cause} variant="default" className="text-xs">
+                          {cause}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1 lg:hidden">
+                      {incident.topics.map((topic) => (
+                        <Badge key={topic} variant="secondary" className="text-xs">
+                          {topic}
+                        </Badge>
+                      ))}
+                    </div>
+                    {incident.fix && (
+                      <div className="mt-2 text-xs font-normal text-muted-foreground lg:hidden">
+                        Fix: {incident.fix}
+                      </div>
+                    )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <div className="flex flex-wrap gap-1">
                       {incident.topics.map(topic => <Badge key={topic} variant="secondary" className="text-xs">{topic}</Badge>)}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div className="flex flex-wrap gap-1">
                       {incident.rootCauses.map(cause => <Badge key={cause} variant="default" className="text-xs">{cause}</Badge>)}
                     </div>
                   </TableCell>
                   <TableCell><Badge className={`${getStatusColor(incident.status)} text-xs`}>{incident.status}</Badge></TableCell>
                   <TableCell><Badge className={`${getImpactColor(incident.impact)} text-xs`}>{incident.impact}</Badge></TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{incident.fix || '-'}</TableCell>
+                  <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">{incident.fix || '-'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEditIncident(incident)} aria-label={`Edit ${incident.problem}`}>
