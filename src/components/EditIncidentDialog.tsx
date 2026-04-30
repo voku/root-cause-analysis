@@ -19,6 +19,15 @@ interface EditIncidentDialogProps {
   rootCauseCounts: Record<string, number>
 }
 
+type PickerField = 'problem' | 'rootCause' | 'topic' | 'fix'
+
+const pickerLabels: Record<PickerField, string> = {
+  problem: 'problem',
+  rootCause: 'root cause',
+  topic: 'topic',
+  fix: 'fix',
+}
+
 export function EditIncidentDialog({
   open,
   onOpenChange,
@@ -37,7 +46,7 @@ export function EditIncidentDialog({
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<IncidentStatus>('Open')
   const [impact, setImpact] = useState<ImpactLevel>('Medium')
-  const [currentField, setCurrentField] = useState<'problem' | 'rootCause' | 'topic' | 'fix' | null>(null)
+  const [currentField, setCurrentField] = useState<PickerField | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
@@ -139,15 +148,62 @@ export function EditIncidentDialog({
 
   const filteredOptions = getFilteredOptions()
   const showCreateNew = searchTerm.trim() && !filteredOptions.some(opt => opt.toLowerCase() === searchTerm.toLowerCase())
+  const renderPicker = (field: PickerField) => {
+    if (currentField !== field) {
+      return null
+    }
+
+    return (
+      <div className="mt-3 rounded-md border">
+        <Command>
+          <CommandInput
+            placeholder={`Search or create ${pickerLabels[field]}...`}
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+            autoFocus
+          />
+          <CommandList className="max-h-[min(40vh,18rem)]">
+            <CommandEmpty>
+              <button
+                onClick={handleCreateNew}
+                className="w-full rounded p-2 text-left text-sm hover:bg-accent"
+              >
+                Create new: <span className="font-semibold">{searchTerm}</span>
+              </button>
+            </CommandEmpty>
+            <CommandGroup>
+              {showCreateNew && (
+                <CommandItem onSelect={handleCreateNew}>
+                  <span className="text-accent-foreground">
+                    Create new: <span className="font-semibold">{searchTerm}</span>
+                  </span>
+                </CommandItem>
+              )}
+              {filteredOptions.map(option => (
+                <CommandItem key={option} onSelect={() => handleSelect(option)}>
+                  <span className="flex-1">{option}</span>
+                  {field === 'rootCause' && rootCauseCounts[option] && (
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {rootCauseCounts[option]} incidents
+                    </span>
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </div>
+    )
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] max-w-2xl overflow-y-auto p-4 sm:p-6">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-2xl flex-col overflow-hidden p-4 sm:max-h-[calc(100vh-2rem)] sm:w-full sm:p-6">
+        <DialogHeader className="shrink-0 pr-8">
           <DialogTitle className="text-2xl font-bold tracking-tight">Edit Incident</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="flex-1 space-y-6 overflow-y-auto pr-1">
           <div>
             <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2 block">
               Problem
@@ -178,6 +234,7 @@ export function EditIncidentDialog({
                 Select or create problem...
               </Button>
             )}
+            {renderPicker('problem')}
           </div>
 
           <div>
@@ -204,6 +261,7 @@ export function EditIncidentDialog({
             >
               Add root cause...
             </Button>
+            {renderPicker('rootCause')}
           </div>
 
           <div>
@@ -230,6 +288,7 @@ export function EditIncidentDialog({
             >
               Add topic...
             </Button>
+            {renderPicker('topic')}
           </div>
 
           <div>
@@ -262,6 +321,7 @@ export function EditIncidentDialog({
                 Select or create fix...
               </Button>
             )}
+            {renderPicker('fix')}
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -308,60 +368,18 @@ export function EditIncidentDialog({
               placeholder="Update context, symptoms, timeline, or related notes..."
             />
           </div>
+        </div>
 
-          {currentField && (
-            <div className="border rounded-md">
-              <Command>
-                <CommandInput
-                  placeholder={`Search or create ${currentField}...`}
-                  value={searchTerm}
-                  onValueChange={setSearchTerm}
-                  autoFocus
-                />
-                <CommandList>
-                  <CommandEmpty>
-                    <button
-                      onClick={handleCreateNew}
-                      className="w-full p-2 text-sm text-left hover:bg-accent rounded"
-                    >
-                      Create new: <span className="font-semibold">{searchTerm}</span>
-                    </button>
-                  </CommandEmpty>
-                  <CommandGroup>
-                    {showCreateNew && (
-                      <CommandItem onSelect={handleCreateNew}>
-                        <span className="text-accent-foreground">
-                          Create new: <span className="font-semibold">{searchTerm}</span>
-                        </span>
-                      </CommandItem>
-                    )}
-                    {filteredOptions.map(option => (
-                      <CommandItem key={option} onSelect={() => handleSelect(option)}>
-                        <span className="flex-1">{option}</span>
-                        {currentField === 'rootCause' && rootCauseCounts[option] && (
-                          <span className="text-xs text-muted-foreground font-mono">
-                            {rootCauseCounts[option]} incidents
-                          </span>
-                        )}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={!problem || rootCauses.length === 0 || topics.length === 0}
-            >
-              Update Incident
-            </Button>
-          </div>
+        <div className="mt-4 flex shrink-0 justify-end gap-2 border-t pt-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={!problem || rootCauses.length === 0 || topics.length === 0}
+          >
+            Update Incident
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
