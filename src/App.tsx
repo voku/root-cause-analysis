@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Toaster, toast } from 'sonner'
-import { Plus, ChartBar, Warning, ListBullets, Network } from '@phosphor-icons/react'
+import { Plus, ChartBar, Warning, ListBullets, Network, ArrowCounterClockwise } from '@phosphor-icons/react'
 import { QuickAddDialog } from '@/components/QuickAddDialog'
 import { EditIncidentDialog } from '@/components/EditIncidentDialog'
 import { Dashboard } from '@/components/Dashboard'
@@ -19,6 +19,8 @@ function App() {
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [incidentToEdit, setIncidentToEdit] = useState<Incident | null>(null)
+  const deletedIncidentRef = useRef<Incident | null>(null)
+  const undoToastIdRef = useRef<string | number | null>(null)
 
   const safeIncidents = incidents || []
 
@@ -67,12 +69,39 @@ function App() {
   }
 
   const handleDeleteIncident = (incident: Incident) => {
+    deletedIncidentRef.current = incident
+    
     setIncidents((current) =>
       (current || []).filter((inc) => inc.id !== incident.id)
     )
-    toast.success('Incident deleted', {
+
+    if (undoToastIdRef.current) {
+      toast.dismiss(undoToastIdRef.current)
+    }
+
+    undoToastIdRef.current = toast.success('Incident deleted', {
       description: `Problem: ${incident.problem}`,
+      duration: 10000,
+      action: {
+        label: 'Undo',
+        onClick: () => handleUndoDelete(),
+      },
     })
+  }
+
+  const handleUndoDelete = () => {
+    if (deletedIncidentRef.current) {
+      const restoredIncident = deletedIncidentRef.current
+      
+      setIncidents((current) => [...(current || []), restoredIncident])
+      
+      toast.success('Incident restored', {
+        description: `Problem: ${restoredIncident.problem}`,
+      })
+      
+      deletedIncidentRef.current = null
+      undoToastIdRef.current = null
+    }
   }
 
   return (
