@@ -236,13 +236,13 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
   const handleExport = (format: ExportFormat) => {
     if (selectedIncidentsList.length === 0) return
 
-    const timestamp = new Date().toISOString().slice(0, 10)
+    const exportDate = new Date().toISOString().slice(0, 10)
     if (format === 'json') {
-      downloadFile(`selected-incidents-${timestamp}.json`, JSON.stringify(selectedIncidentsList, null, 2), 'application/json')
+      downloadFile(`selected-incidents-${exportDate}.json`, JSON.stringify(selectedIncidentsList, null, 2), 'application/json')
       return
     }
 
-    downloadFile(`selected-incidents-${timestamp}.csv`, incidentsToCsv(selectedIncidentsList), 'text/csv')
+    downloadFile(`selected-incidents-${exportDate}.csv`, incidentsToCsv(selectedIncidentsList), 'text/csv')
   }
 
   return (
