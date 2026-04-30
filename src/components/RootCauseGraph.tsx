@@ -467,16 +467,16 @@ export function RootCauseGraph({ incidents }: RootCauseGraphProps) {
               </Label>
             </div>
             <div className="hidden h-6 w-px bg-border sm:block" />
-            <Button variant="outline" size="sm" onClick={handleZoomOut} aria-label="Zoom out graph">
+            <Button variant="outline" size="sm" onClick={handleZoomOut} aria-label="Zoom out">
               <MagnifyingGlassMinus className="h-4 w-4" />
             </Button>
             <Badge variant="secondary" className="font-mono px-3">
               {(zoom * 100).toFixed(0)}%
             </Badge>
-            <Button variant="outline" size="sm" onClick={handleZoomIn} aria-label="Zoom in graph">
+            <Button variant="outline" size="sm" onClick={handleZoomIn} aria-label="Zoom in">
               <MagnifyingGlassPlus className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={handleReset} aria-label="Reset graph zoom">
+            <Button variant="outline" size="sm" onClick={handleReset} aria-label="Reset zoom">
               <ArrowsOutSimple className="h-4 w-4" />
             </Button>
           </div>
