@@ -14,6 +14,21 @@ import { getUniqueValues, getAllRootCauses, getAllTopics, getRootCauseCounts } f
 import { useLocalStorageState } from '@/hooks/use-local-storage-state'
 
 let fallbackIncidentIdCounter = 0
+const fallbackIncidentCounterKey = 'rca-incident-id-counter'
+
+function getNextFallbackIncidentCounter() {
+  fallbackIncidentIdCounter += 1
+
+  try {
+    const storedCounter = Number.parseInt(window.localStorage.getItem(fallbackIncidentCounterKey) || '0', 10)
+    const nextCounter = Math.max(storedCounter, fallbackIncidentIdCounter) + 1
+    fallbackIncidentIdCounter = nextCounter
+    window.localStorage.setItem(fallbackIncidentCounterKey, String(nextCounter))
+    return nextCounter
+  } catch {
+    return fallbackIncidentIdCounter
+  }
+}
 
 function createIncidentId() {
   const webCrypto = globalThis.crypto
@@ -22,15 +37,15 @@ function createIncidentId() {
     return webCrypto.randomUUID()
   }
 
-  fallbackIncidentIdCounter += 1
+  const fallbackCounter = getNextFallbackIncidentCounter()
 
   if (webCrypto?.getRandomValues) {
     const values = new Uint32Array(4)
     webCrypto.getRandomValues(values)
-    return `${Date.now()}-${fallbackIncidentIdCounter}-${Array.from(values, (value) => value.toString(36)).join('')}`
+    return `${Date.now()}-${fallbackCounter}-${Array.from(values, (value) => value.toString(36)).join('')}`
   }
 
-  return `${Date.now()}-${fallbackIncidentIdCounter}-${Math.random().toString(36).slice(2)}`
+  return `${Date.now()}-${fallbackCounter}-${Math.random().toString(36).slice(2)}`
 }
 
 function App() {

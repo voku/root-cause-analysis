@@ -20,6 +20,7 @@ interface IncidentsTableProps {
 type SortField = 'createdAt' | 'problem' | 'impact' | 'status'
 type SortDirection = 'asc' | 'desc'
 type ExportFormat = 'csv' | 'json'
+type CsvIncidentField = 'id' | 'createdAt' | 'problem' | 'description' | 'topics' | 'rootCauses' | 'fix' | 'status' | 'impact'
 
 const STATUS_VALUES: IncidentStatus[] = ['Open', 'In Progress', 'Resolved', 'Closed']
 const IMPACT_VALUES: ImpactLevel[] = ['Low', 'Medium', 'High', 'Critical']
@@ -36,13 +37,13 @@ function downloadFile(filename: string, contents: string, mimeType: string) {
   URL.revokeObjectURL(url)
 }
 
-function csvEscape(value: unknown): string {
+function csvEscape(value: string | string[] | undefined): string {
   const normalized = (Array.isArray(value) ? value.join('; ') : String(value ?? '')).replace(/[\r\n]+/g, ' ')
   return `"${normalized.replace(/"/g, '""')}"`
 }
 
 function incidentsToCsv(incidents: Incident[]): string {
-  const headers: (keyof Incident)[] = ['id', 'createdAt', 'problem', 'description', 'topics', 'rootCauses', 'fix', 'status', 'impact']
+  const headers: CsvIncidentField[] = ['id', 'createdAt', 'problem', 'description', 'topics', 'rootCauses', 'fix', 'status', 'impact']
   const rows = incidents.map((incident) => headers.map((header) => csvEscape(incident[header])).join(','))
   return [headers.join(','), ...rows].join('\n')
 }
@@ -410,6 +411,11 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
                       checked={selectedIncidents.has(incident.id)}
                       onClick={(event) => {
                         shiftSelectRef.current = event.shiftKey
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === ' ' || event.key === 'Enter') {
+                          shiftSelectRef.current = event.shiftKey
+                        }
                       }}
                       onCheckedChange={() => {
                         toggleSelectIncident(incident.id, shiftSelectRef.current)
