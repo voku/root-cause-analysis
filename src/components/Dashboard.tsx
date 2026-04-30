@@ -51,7 +51,7 @@ export function Dashboard({ incidents }: DashboardProps) {
                       <TrendIndicator trend={cause.trend} size="sm" />
                     )}
                   </div>
-                  <span className="text-xl font-bold font-mono tabular-nums sm:text-2xl">
+                  <span className="text-xl font-mono font-bold tabular-nums sm:text-2xl">
                     {cause.count}
                   </span>
                 </div>
@@ -66,7 +66,7 @@ export function Dashboard({ incidents }: DashboardProps) {
             Problems This Week
           </h3>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
-            <div className="text-5xl font-bold font-mono tabular-nums sm:text-6xl">
+            <div className="text-5xl font-mono font-bold tabular-nums sm:text-6xl">
               {thisWeekCount}
             </div>
             {lastWeekCount > 0 && (

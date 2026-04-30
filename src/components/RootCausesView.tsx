@@ -80,7 +80,7 @@ export function RootCausesView({ incidents }: RootCausesViewProps) {
           <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
             Top Cause
           </div>
-          <div className="break-words text-2xl font-bold font-mono">
+          <div className="break-words text-2xl font-mono font-bold">
             {rootCauseCounts[0]?.name || 'N/A'}
           </div>
           {rootCauseCounts[0] && (
@@ -94,7 +94,7 @@ export function RootCausesView({ incidents }: RootCausesViewProps) {
           <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
             Causes {'>'} 5 Incidents
           </div>
-          <div className="text-2xl font-bold font-mono">
+          <div className="text-2xl font-mono font-bold">
             {rootCauseCounts.filter(rc => rc.count > 5).length}
           </div>
           <div className="text-sm text-muted-foreground mt-1">
@@ -106,7 +106,7 @@ export function RootCausesView({ incidents }: RootCausesViewProps) {
           <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
             Avg Per Cause
           </div>
-          <div className="text-2xl font-bold font-mono">
+          <div className="text-2xl font-mono font-bold">
             {rootCauseCounts.length > 0
               ? (incidents.length / rootCauseCounts.length).toFixed(1)
               : '0'}

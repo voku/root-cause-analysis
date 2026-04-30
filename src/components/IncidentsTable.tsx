@@ -377,7 +377,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
       </div>
 
       <div className="border rounded-md">
-        <Table className="min-w-[960px]">
+        <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]">
@@ -389,15 +389,15 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
               <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('problem')}>
                 <div className="flex items-center gap-2">Problem<SortIcon field="problem" /></div>
               </TableHead>
-              <TableHead>Topic</TableHead>
-              <TableHead>Root Causes</TableHead>
+              <TableHead className="hidden lg:table-cell">Topic</TableHead>
+              <TableHead className="hidden md:table-cell">Root Causes</TableHead>
               <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('status')}>
                 <div className="flex items-center gap-2">Status<SortIcon field="status" /></div>
               </TableHead>
               <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('impact')}>
                 <div className="flex items-center gap-2">Impact<SortIcon field="impact" /></div>
               </TableHead>
-              <TableHead>Fix</TableHead>
+              <TableHead className="hidden lg:table-cell">Fix</TableHead>
               <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -435,20 +435,39 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
                     {incident.description && (
                       <div className="text-xs text-muted-foreground font-normal line-clamp-2 mt-1">{incident.description}</div>
                     )}
+                    <div className="mt-2 flex flex-wrap gap-1 md:hidden">
+                      {incident.rootCauses.map((cause) => (
+                        <Badge key={cause} variant="default" className="text-xs">
+                          {cause}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1 lg:hidden">
+                      {incident.topics.map((topic) => (
+                        <Badge key={topic} variant="secondary" className="text-xs">
+                          {topic}
+                        </Badge>
+                      ))}
+                    </div>
+                    {incident.fix && (
+                      <div className="mt-2 text-xs font-normal text-muted-foreground lg:hidden">
+                        Fix: {incident.fix}
+                      </div>
+                    )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <div className="flex flex-wrap gap-1">
                       {incident.topics.map(topic => <Badge key={topic} variant="secondary" className="text-xs">{topic}</Badge>)}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div className="flex flex-wrap gap-1">
                       {incident.rootCauses.map(cause => <Badge key={cause} variant="default" className="text-xs">{cause}</Badge>)}
                     </div>
                   </TableCell>
                   <TableCell><Badge className={`${getStatusColor(incident.status)} text-xs`}>{incident.status}</Badge></TableCell>
                   <TableCell><Badge className={`${getImpactColor(incident.impact)} text-xs`}>{incident.impact}</Badge></TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{incident.fix || '-'}</TableCell>
+                  <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{incident.fix || '-'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEditIncident(incident)} aria-label={`Edit ${incident.problem}`}>

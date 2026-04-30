@@ -524,7 +524,7 @@ export function RootCauseGraph({ incidents }: RootCauseGraphProps) {
                   ×
                 </button>
               </div>
-               <div className="mb-2 break-words text-sm font-semibold">{selectedNode.label}</div>
+              <div className="mb-2 break-words text-sm font-semibold">{selectedNode.label}</div>
               <div className="text-xs text-muted-foreground">
                 {selectedNode.count} {selectedNode.count === 1 ? 'incident' : 'incidents'}
               </div>
