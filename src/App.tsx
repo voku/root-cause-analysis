@@ -21,7 +21,7 @@ const createIncidentId = (() => {
     fallbackIncidentIdCounter += 1
 
     try {
-      const storedCounter = Number.parseInt(window.localStorage.getItem(fallbackIncidentCounterKey) || '0', 10)
+      const storedCounter = Number.parseInt(window.localStorage.getItem(fallbackIncidentCounterKey) || '0', 10) || 0
       const nextCounter = Math.max(storedCounter, fallbackIncidentIdCounter) + 1
       fallbackIncidentIdCounter = nextCounter
       window.localStorage.setItem(fallbackIncidentCounterKey, String(nextCounter))

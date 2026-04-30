@@ -38,6 +38,8 @@ function downloadFile(filename: string, contents: string, mimeType: string) {
 }
 
 function csvEscape(value: string | string[] | undefined): string {
+  if (value === undefined) return '""'
+
   const normalized = (Array.isArray(value) ? value.join('; ') : String(value ?? '')).replace(/[\r\n]+/g, ' ')
   return `"${normalized.replace(/"/g, '""')}"`
 }
@@ -414,7 +416,9 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
                       }}
                       onKeyDown={(event) => {
                         if (event.key === ' ' || event.key === 'Enter') {
-                          shiftSelectRef.current = event.shiftKey
+                          event.preventDefault()
+                          toggleSelectIncident(incident.id, event.shiftKey)
+                          shiftSelectRef.current = false
                         }
                       }}
                       onCheckedChange={() => {

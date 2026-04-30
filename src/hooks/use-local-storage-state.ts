@@ -5,7 +5,8 @@ function readStoredValue<T>(key: string, defaultValue: T): T {
 
   try {
     const storedValue = window.localStorage.getItem(key)
-    return storedValue ? (JSON.parse(storedValue) as T) : defaultValue
+    if (!storedValue) return defaultValue
+    return JSON.parse(storedValue) as T
   } catch {
     return defaultValue
   }
