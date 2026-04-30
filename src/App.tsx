@@ -12,7 +12,12 @@ import { RootCauseGraph } from '@/components/RootCauseGraph'
 import type { Incident } from '@/lib/types'
 import { getUniqueValues, getAllRootCauses, getAllTopics, getRootCauseCounts } from '@/lib/data-utils'
 import { useLocalStorageState } from '@/hooks/use-local-storage-state'
-import { ulid } from 'ulid'
+
+function createIncidentId() {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
 
 function App() {
   const [incidents, setIncidents] = useLocalStorageState<Incident[]>('rca-incidents', [])
@@ -44,7 +49,7 @@ function App() {
       ...(current || []),
       {
         ...newIncident,
-        id: ulid(),
+        id: createIncidentId(),
         createdAt: new Date().toISOString(),
       },
     ])
