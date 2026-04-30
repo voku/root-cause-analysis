@@ -3,24 +3,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Funnel, CaretUp, CaretDown, PencilSimple } from '@phosphor-icons/react'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { Funnel, CaretUp, CaretDown, PencilSimple, Trash } from '@phosphor-icons/react'
 import type { Incident, ImpactLevel, IncidentStatus } from '@/lib/types'
 import { formatDate, getAllTopics } from '@/lib/data-utils'
 
 interface IncidentsTableProps {
   incidents: Incident[]
   onEditIncident: (incident: Incident) => void
+  onDeleteIncident: (incident: Incident) => void
 }
 
 type SortField = 'createdAt' | 'problem' | 'impact' | 'status'
 type SortDirection = 'asc' | 'desc'
 
-export function IncidentsTable({ incidents, onEditIncident }: IncidentsTableProps) {
+export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident }: IncidentsTableProps) {
   const [statusFilter, setStatusFilter] = useState<IncidentStatus | 'All'>('All')
   const [impactFilter, setImpactFilter] = useState<ImpactLevel | 'All'>('All')
   const [topicFilter, setTopicFilter] = useState<string>('All')
   const [sortField, setSortField] = useState<SortField>('createdAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [incidentToDelete, setIncidentToDelete] = useState<Incident | null>(null)
 
   const allTopics = useMemo(() => getAllTopics(incidents), [incidents])
 
@@ -103,6 +107,19 @@ export function IncidentsTable({ incidents, onEditIncident }: IncidentsTableProp
   }
 
   const hasActiveFilters = statusFilter !== 'All' || impactFilter !== 'All' || topicFilter !== 'All'
+
+  const handleDeleteClick = (incident: Incident) => {
+    setIncidentToDelete(incident)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (incidentToDelete) {
+      onDeleteIncident(incidentToDelete)
+    }
+    setDeleteDialogOpen(false)
+    setIncidentToDelete(null)
+  }
 
   return (
     <div className="space-y-4">
@@ -214,7 +231,7 @@ export function IncidentsTable({ incidents, onEditIncident }: IncidentsTableProp
                 </div>
               </TableHead>
               <TableHead>Fix</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -263,14 +280,24 @@ export function IncidentsTable({ incidents, onEditIncident }: IncidentsTableProp
                     {incident.fix || '-'}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => onEditIncident(incident)}
-                    >
-                      <PencilSimple className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => onEditIncident(incident)}
+                      >
+                        <PencilSimple className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDeleteClick(incident)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -278,6 +305,38 @@ export function IncidentsTable({ incidents, onEditIncident }: IncidentsTableProp
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Incident</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this incident? This action cannot be undone.
+              {incidentToDelete && (
+                <div className="mt-4 p-3 bg-muted rounded-md space-y-2">
+                  <div className="font-medium text-foreground">{incidentToDelete.problem}</div>
+                  <div className="text-sm flex flex-wrap gap-1">
+                    {incidentToDelete.rootCauses.map(cause => (
+                      <Badge key={cause} variant="default" className="text-xs">
+                        {cause}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

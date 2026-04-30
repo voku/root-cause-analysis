@@ -66,6 +66,15 @@ function App() {
     })
   }
 
+  const handleDeleteIncident = (incident: Incident) => {
+    setIncidents((current) =>
+      (current || []).filter((inc) => inc.id !== incident.id)
+    )
+    toast.success('Incident deleted', {
+      description: `Problem: ${incident.problem}`,
+    })
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Toaster richColors position="top-right" />
@@ -113,7 +122,11 @@ function App() {
           </TabsContent>
 
           <TabsContent value="problems">
-            <IncidentsTable incidents={safeIncidents} onEditIncident={handleEditIncident} />
+            <IncidentsTable 
+              incidents={safeIncidents} 
+              onEditIncident={handleEditIncident}
+              onDeleteIncident={handleDeleteIncident}
+            />
           </TabsContent>
 
           <TabsContent value="root-causes">
