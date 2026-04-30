@@ -1,9 +1,8 @@
 import { useState, useMemo, useRef } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Toaster, toast } from 'sonner'
-import { Plus, ChartBar, Warning, ListBullets, Network, ArrowCounterClockwise } from '@phosphor-icons/react'
+import { Plus, ChartBar, Warning, ListBullets, Network, GithubLogo } from '@phosphor-icons/react'
 import { QuickAddDialog } from '@/components/QuickAddDialog'
 import { EditIncidentDialog } from '@/components/EditIncidentDialog'
 import { Dashboard } from '@/components/Dashboard'
@@ -12,10 +11,47 @@ import { RootCausesView } from '@/components/RootCausesView'
 import { RootCauseGraph } from '@/components/RootCauseGraph'
 import type { Incident } from '@/lib/types'
 import { getUniqueValues, getAllRootCauses, getAllTopics, getRootCauseCounts } from '@/lib/data-utils'
-import { ulid } from 'ulid'
+import { useLocalStorageState } from '@/hooks/use-local-storage-state'
+
+const createIncidentId = (() => {
+  let fallbackIncidentIdCounter = 0
+  const fallbackIncidentCounterKey = 'rca-incident-id-counter'
+
+  function getNextFallbackIncidentCounter() {
+    fallbackIncidentIdCounter += 1
+
+    try {
+      const storedCounter = Number.parseInt(window.localStorage.getItem(fallbackIncidentCounterKey) || '0', 10) || 0
+      const nextCounter = Math.max(storedCounter, fallbackIncidentIdCounter) + 1
+      fallbackIncidentIdCounter = nextCounter
+      window.localStorage.setItem(fallbackIncidentCounterKey, String(nextCounter))
+      return nextCounter
+    } catch {
+      return fallbackIncidentIdCounter
+    }
+  }
+
+  return function createIncidentId() {
+    const webCrypto = globalThis.crypto
+
+    if (webCrypto?.randomUUID) {
+      return webCrypto.randomUUID()
+    }
+
+    const fallbackCounter = getNextFallbackIncidentCounter()
+
+    if (webCrypto?.getRandomValues) {
+      const values = new Uint32Array(4)
+      webCrypto.getRandomValues(values)
+      return `${Date.now()}-${fallbackCounter}-${Array.from(values, (value) => value.toString(36)).join('')}`
+    }
+
+    return `${Date.now()}-${fallbackCounter}-${Math.random().toString(36).slice(2)}`
+  }
+})()
 
 function App() {
-  const [incidents, setIncidents] = useKV<Incident[]>('rca-incidents', [])
+  const [incidents, setIncidents] = useLocalStorageState<Incident[]>('rca-incidents', [])
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [incidentToEdit, setIncidentToEdit] = useState<Incident | null>(null)
@@ -23,7 +59,7 @@ function App() {
   const deletedIncidentsRef = useRef<Incident[]>([])
   const undoToastIdRef = useRef<string | number | null>(null)
 
-  const safeIncidents = incidents || []
+  const safeIncidents = useMemo(() => incidents || [], [incidents])
 
   const existingProblems = useMemo(() => getUniqueValues(safeIncidents, 'problem'), [safeIncidents])
   const existingRootCauses = useMemo(() => getAllRootCauses(safeIncidents), [safeIncidents])
@@ -44,7 +80,7 @@ function App() {
       ...(current || []),
       {
         ...newIncident,
-        id: ulid(),
+        id: createIncidentId(),
         createdAt: new Date().toISOString(),
       },
     ])
@@ -66,6 +102,21 @@ function App() {
     )
     toast.success('Incident updated successfully', {
       description: `Problem: ${updatedIncident.problem}`,
+    })
+  }
+
+  const handleBulkUpdate = (incidentIds: string[], updates: Partial<Pick<Incident, 'status' | 'impact'>>) => {
+    const selectedIds = new Set(incidentIds)
+
+    setIncidents((current) =>
+      (current || []).map((incident) =>
+        selectedIds.has(incident.id) ? { ...incident, ...updates } : incident
+      )
+    )
+
+    const changedFields = Object.keys(updates).join(' and ')
+    toast.success(`${incidentIds.length} incidents updated`, {
+      description: `Updated ${changedFields}`,
     })
   }
 
@@ -158,10 +209,22 @@ function App() {
                 IT Operations Incident Tracker
               </p>
             </div>
-            <Button onClick={() => setQuickAddOpen(true)} size="lg" className="gap-2">
-              <Plus className="h-5 w-5" weight="bold" />
-              Add Incident
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="lg" className="gap-2" asChild>
+                <a
+                  href="https://github.com/voku/root-cause-analysis"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <GithubLogo className="h-5 w-5" weight="bold" />
+                  Contribute
+                </a>
+              </Button>
+              <Button onClick={() => setQuickAddOpen(true)} size="lg" className="gap-2">
+                <Plus className="h-5 w-5" weight="bold" />
+                Add Incident
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -197,6 +260,7 @@ function App() {
               onEditIncident={handleEditIncident}
               onDeleteIncident={handleDeleteIncident}
               onBulkDelete={handleBulkDelete}
+              onBulkUpdate={handleBulkUpdate}
             />
           </TabsContent>
 
