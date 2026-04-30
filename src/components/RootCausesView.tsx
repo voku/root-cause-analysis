@@ -3,13 +3,14 @@ import { Badge } from '@/components/ui/badge'
 import type { Incident } from '@/lib/types'
 import { getRootCauseCounts } from '@/lib/data-utils'
 import { Warning, ChartBar } from '@phosphor-icons/react'
+import { TrendIndicator } from '@/components/TrendIndicator'
 
 interface RootCausesViewProps {
   incidents: Incident[]
 }
 
 export function RootCausesView({ incidents }: RootCausesViewProps) {
-  const rootCauseCounts = getRootCauseCounts(incidents)
+  const rootCauseCounts = getRootCauseCounts(incidents, true)
   const maxCount = rootCauseCounts[0]?.count || 1
 
   return (
@@ -48,6 +49,9 @@ export function RootCausesView({ incidents }: RootCausesViewProps) {
                       <span className="font-medium group-hover:text-primary transition-colors">
                         {cause.name}
                       </span>
+                      {cause.trend && (
+                        <TrendIndicator trend={cause.trend} size="sm" />
+                      )}
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-muted-foreground">

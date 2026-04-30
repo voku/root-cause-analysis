@@ -16,11 +16,20 @@ export interface Incident {
 export interface RootCauseCount {
   name: string
   count: number
+  trend?: TrendData
 }
 
 export interface TopicCount {
   name: string
   count: number
+  trend?: TrendData
+}
+
+export interface TrendData {
+  direction: 'up' | 'down' | 'stable'
+  percentage: number
+  previousCount: number
+  currentCount: number
 }
 
 export interface AutocompleteOption {

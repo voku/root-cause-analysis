@@ -1,6 +1,39 @@
-import { Incident, RootCauseCount, TopicCount } from './types'
+import { Incident, RootCauseCount, TopicCount, TrendData } from './types'
 
-export function getRootCauseCounts(incidents: Incident[]): RootCauseCount[] {
+function calculateTrend(currentCount: number, previousCount: number): TrendData {
+  if (previousCount === 0) {
+    return {
+      direction: currentCount > 0 ? 'up' : 'stable',
+      percentage: currentCount > 0 ? 100 : 0,
+      previousCount,
+      currentCount
+    }
+  }
+  
+  const change = currentCount - previousCount
+  const percentage = Math.abs((change / previousCount) * 100)
+  
+  let direction: 'up' | 'down' | 'stable' = 'stable'
+  if (change > 0) direction = 'up'
+  else if (change < 0) direction = 'down'
+  
+  return { direction, percentage, previousCount, currentCount }
+}
+
+function getIncidentsInPeriod(incidents: Incident[], daysAgo: number, periodLength: number): Incident[] {
+  const endDate = new Date()
+  endDate.setDate(endDate.getDate() - daysAgo)
+  
+  const startDate = new Date(endDate)
+  startDate.setDate(startDate.getDate() - periodLength)
+  
+  return incidents.filter(incident => {
+    const incidentDate = new Date(incident.createdAt)
+    return incidentDate >= startDate && incidentDate < endDate
+  })
+}
+
+export function getRootCauseCounts(incidents: Incident[], includeTrends = false): RootCauseCount[] {
   const counts = new Map<string, number>()
   
   incidents.forEach(incident => {
@@ -9,12 +42,40 @@ export function getRootCauseCounts(incidents: Incident[]): RootCauseCount[] {
     })
   })
   
-  return Array.from(counts.entries())
+  const result = Array.from(counts.entries())
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count)
+  
+  if (!includeTrends) return result
+  
+  const currentPeriodIncidents = getIncidentsInPeriod(incidents, 0, 7)
+  const previousPeriodIncidents = getIncidentsInPeriod(incidents, 7, 7)
+  
+  const currentCounts = new Map<string, number>()
+  const previousCounts = new Map<string, number>()
+  
+  currentPeriodIncidents.forEach(incident => {
+    incident.rootCauses.forEach(cause => {
+      currentCounts.set(cause, (currentCounts.get(cause) || 0) + 1)
+    })
+  })
+  
+  previousPeriodIncidents.forEach(incident => {
+    incident.rootCauses.forEach(cause => {
+      previousCounts.set(cause, (previousCounts.get(cause) || 0) + 1)
+    })
+  })
+  
+  return result.map(item => ({
+    ...item,
+    trend: calculateTrend(
+      currentCounts.get(item.name) || 0,
+      previousCounts.get(item.name) || 0
+    )
+  }))
 }
 
-export function getTopicCounts(incidents: Incident[]): TopicCount[] {
+export function getTopicCounts(incidents: Incident[], includeTrends = false): TopicCount[] {
   const counts = new Map<string, number>()
   
   incidents.forEach(incident => {
@@ -23,9 +84,37 @@ export function getTopicCounts(incidents: Incident[]): TopicCount[] {
     })
   })
   
-  return Array.from(counts.entries())
+  const result = Array.from(counts.entries())
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count)
+  
+  if (!includeTrends) return result
+  
+  const currentPeriodIncidents = getIncidentsInPeriod(incidents, 0, 7)
+  const previousPeriodIncidents = getIncidentsInPeriod(incidents, 7, 7)
+  
+  const currentCounts = new Map<string, number>()
+  const previousCounts = new Map<string, number>()
+  
+  currentPeriodIncidents.forEach(incident => {
+    incident.topics.forEach(topic => {
+      currentCounts.set(topic, (currentCounts.get(topic) || 0) + 1)
+    })
+  })
+  
+  previousPeriodIncidents.forEach(incident => {
+    incident.topics.forEach(topic => {
+      previousCounts.set(topic, (previousCounts.get(topic) || 0) + 1)
+    })
+  })
+  
+  return result.map(item => ({
+    ...item,
+    trend: calculateTrend(
+      currentCounts.get(item.name) || 0,
+      previousCounts.get(item.name) || 0
+    )
+  }))
 }
 
 export function getUniqueValues(incidents: Incident[], field: keyof Pick<Incident, 'problem' | 'fix'>): string[] {

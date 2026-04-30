@@ -3,13 +3,14 @@ import { Badge } from '@/components/ui/badge'
 import type { Incident } from '@/lib/types'
 import { getRootCauseCounts, getTopicCounts, getThisWeekIncidentCount, getLastWeekIncidentCount } from '@/lib/data-utils'
 import { TrendUp, TrendDown, Warning, Clock } from '@phosphor-icons/react'
+import { TrendIndicator } from '@/components/TrendIndicator'
 
 interface DashboardProps {
   incidents: Incident[]
 }
 
 export function Dashboard({ incidents }: DashboardProps) {
-  const rootCauseCounts = getRootCauseCounts(incidents).slice(0, 5)
+  const rootCauseCounts = getRootCauseCounts(incidents, true).slice(0, 5)
   const topicCounts = getTopicCounts(incidents)
   const thisWeekCount = getThisWeekIncidentCount(incidents)
   const lastWeekCount = getLastWeekIncidentCount(incidents)
@@ -46,6 +47,9 @@ export function Dashboard({ incidents }: DashboardProps) {
                     <span className="text-sm font-medium group-hover:text-primary transition-colors">
                       {cause.name}
                     </span>
+                    {cause.trend && (
+                      <TrendIndicator trend={cause.trend} size="sm" />
+                    )}
                   </div>
                   <span className="text-2xl font-bold font-mono tabular-nums">
                     {cause.count}
