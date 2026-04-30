@@ -3,11 +3,12 @@ import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Toaster, toast } from 'sonner'
-import { Plus, ChartBar, Warning, ListBullets } from '@phosphor-icons/react'
+import { Plus, ChartBar, Warning, ListBullets, Network } from '@phosphor-icons/react'
 import { QuickAddDialog } from '@/components/QuickAddDialog'
 import { Dashboard } from '@/components/Dashboard'
 import { IncidentsTable } from '@/components/IncidentsTable'
 import { RootCausesView } from '@/components/RootCausesView'
+import { RootCauseGraph } from '@/components/RootCauseGraph'
 import type { Incident } from '@/lib/types'
 import { getUniqueValues, getAllRootCauses, getAllTopics, getRootCauseCounts } from '@/lib/data-utils'
 import { ulid } from 'ulid'
@@ -69,7 +70,7 @@ function App() {
 
       <main className="container mx-auto px-6 py-8">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="dashboard" className="gap-2">
               <ChartBar className="h-4 w-4" />
               Dashboard
@@ -81,6 +82,10 @@ function App() {
             <TabsTrigger value="root-causes" className="gap-2">
               <Warning className="h-4 w-4" />
               Root Causes
+            </TabsTrigger>
+            <TabsTrigger value="graph" className="gap-2">
+              <Network className="h-4 w-4" />
+              Graph
             </TabsTrigger>
           </TabsList>
 
@@ -94,6 +99,10 @@ function App() {
 
           <TabsContent value="root-causes">
             <RootCausesView incidents={safeIncidents} />
+          </TabsContent>
+
+          <TabsContent value="graph">
+            <RootCauseGraph incidents={safeIncidents} />
           </TabsContent>
         </Tabs>
       </main>
