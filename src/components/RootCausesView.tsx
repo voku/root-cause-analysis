@@ -15,9 +15,9 @@ export function RootCausesView({ incidents }: RootCausesViewProps) {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+      <Card className="p-4 sm:p-6">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h3 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
             <Warning className="h-5 w-5 text-primary" weight="bold" />
             Root Cause Analysis
           </h3>
@@ -41,19 +41,19 @@ export function RootCausesView({ incidents }: RootCausesViewProps) {
 
               return (
                 <div key={cause.name} className="group">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
+                  <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
                       <span className="text-xs font-mono text-muted-foreground w-6 text-right">
                         #{index + 1}
                       </span>
-                      <span className="font-medium group-hover:text-primary transition-colors">
+                      <span className="min-w-0 break-words font-medium transition-colors group-hover:text-primary">
                         {cause.name}
                       </span>
                       {cause.trend && (
                         <TrendIndicator trend={cause.trend} size="sm" />
                       )}
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                       <span className="text-xs text-muted-foreground">
                         {((cause.count / incidents.length) * 100).toFixed(1)}% of all incidents
                       </span>
@@ -75,12 +75,12 @@ export function RootCausesView({ incidents }: RootCausesViewProps) {
         )}
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 bg-gradient-to-br from-critical/10 to-critical/5 border-critical/20">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card className="border-critical/20 bg-gradient-to-br from-critical/10 to-critical/5 p-4">
           <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
             Top Cause
           </div>
-          <div className="text-2xl font-bold font-mono">
+          <div className="break-words text-2xl font-bold font-mono">
             {rootCauseCounts[0]?.name || 'N/A'}
           </div>
           {rootCauseCounts[0] && (
@@ -90,7 +90,7 @@ export function RootCausesView({ incidents }: RootCausesViewProps) {
           )}
         </Card>
 
-        <Card className="p-4 bg-gradient-to-br from-warning/10 to-warning/5 border-warning/20">
+        <Card className="border-warning/20 bg-gradient-to-br from-warning/10 to-warning/5 p-4">
           <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
             Causes {'>'} 5 Incidents
           </div>
@@ -102,7 +102,7 @@ export function RootCausesView({ incidents }: RootCausesViewProps) {
           </div>
         </Card>
 
-        <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 p-4">
           <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
             Avg Per Cause
           </div>

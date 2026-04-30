@@ -251,8 +251,8 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
     <div className="space-y-4">
       {selectedIncidents.size > 0 && (
         <div className="bg-accent/10 border border-accent rounded-lg px-4 py-3 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
               <span className="font-medium text-accent-foreground">
                 {selectedIncidents.size} incident{selectedIncidents.size !== 1 ? 's' : ''} selected
               </span>
@@ -268,24 +268,24 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
               </Button>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => handleExport('csv')} className="gap-2">
+              <Button variant="outline" size="sm" onClick={() => handleExport('csv')} className="w-full gap-2 sm:w-auto">
                 <DownloadSimple className="h-4 w-4" />
                 Export CSV
               </Button>
-              <Button variant="outline" size="sm" onClick={() => handleExport('json')} className="gap-2">
+              <Button variant="outline" size="sm" onClick={() => handleExport('json')} className="w-full gap-2 sm:w-auto">
                 <DownloadSimple className="h-4 w-4" />
                 Export JSON
               </Button>
-              <Button variant="destructive" size="sm" onClick={handleBulkDeleteClick} className="gap-2">
+              <Button variant="destructive" size="sm" onClick={handleBulkDeleteClick} className="w-full gap-2 sm:w-auto">
                 <Trash className="h-4 w-4" />
                 Delete Selected
               </Button>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             <span className="text-sm font-medium">Bulk edit:</span>
             <Select value={bulkStatus} onValueChange={(value) => setBulkStatus(value as IncidentStatus | 'No change')}>
-              <SelectTrigger className="w-44">
+              <SelectTrigger className="w-full sm:w-44">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -296,7 +296,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
               </SelectContent>
             </Select>
             <Select value={bulkImpact} onValueChange={(value) => setBulkImpact(value as ImpactLevel | 'No change')}>
-              <SelectTrigger className="w-44">
+              <SelectTrigger className="w-full sm:w-44">
                 <SelectValue placeholder="Impact" />
               </SelectTrigger>
               <SelectContent>
@@ -306,7 +306,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
                 ))}
               </SelectContent>
             </Select>
-            <Button size="sm" onClick={handleBulkUpdate} disabled={!canApplyBulkEdit}>
+            <Button size="sm" onClick={handleBulkUpdate} disabled={!canApplyBulkEdit} className="w-full sm:w-auto">
               Apply to selected
             </Button>
             <span className="text-xs text-muted-foreground">Tip: Shift+Click checkboxes to select a range.</span>
@@ -314,14 +314,14 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Funnel className="h-4 w-4" />
           <span className="font-medium">Filters:</span>
         </div>
 
         <Select value={topicFilter} onValueChange={setTopicFilter}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Topic" />
           </SelectTrigger>
           <SelectContent>
@@ -333,7 +333,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
         </Select>
 
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as IncidentStatus | 'All')}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -345,7 +345,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
         </Select>
 
         <Select value={impactFilter} onValueChange={(v) => setImpactFilter(v as ImpactLevel | 'All')}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Impact" />
           </SelectTrigger>
           <SelectContent>
@@ -360,6 +360,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
           <Button
             variant="ghost"
             size="sm"
+            className="w-full sm:w-auto"
             onClick={() => {
               setStatusFilter('All')
               setImpactFilter('All')
@@ -370,13 +371,13 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
           </Button>
         )}
 
-        <div className="ml-auto text-sm text-muted-foreground font-mono">
+        <div className="text-sm text-muted-foreground font-mono sm:ml-auto">
           {filteredAndSortedIncidents.length} incidents
         </div>
       </div>
 
       <div className="border rounded-md">
-        <Table>
+        <Table className="min-w-[960px]">
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]">
