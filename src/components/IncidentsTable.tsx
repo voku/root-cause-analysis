@@ -467,7 +467,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
                   </TableCell>
                   <TableCell><Badge className={`${getStatusColor(incident.status)} text-xs`}>{incident.status}</Badge></TableCell>
                   <TableCell><Badge className={`${getImpactColor(incident.impact)} text-xs`}>{incident.impact}</Badge></TableCell>
-                  <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{incident.fix || '-'}</TableCell>
+                  <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">{incident.fix || '-'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEditIncident(incident)} aria-label={`Edit ${incident.problem}`}>
