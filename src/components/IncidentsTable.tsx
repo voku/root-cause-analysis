@@ -1,4 +1,4 @@
-import { MouseEvent, useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -37,7 +37,7 @@ function downloadFile(filename: string, contents: string, mimeType: string) {
 }
 
 function csvEscape(value: unknown): string {
-  const normalized = Array.isArray(value) ? value.join('; ') : String(value ?? '')
+  const normalized = (Array.isArray(value) ? value.join('; ') : String(value ?? '')).replace(/[\r\n]+/g, ' ')
   return `"${normalized.replace(/"/g, '""')}"`
 }
 
@@ -60,6 +60,7 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
   const [lastSelectedIncidentId, setLastSelectedIncidentId] = useState<string | null>(null)
   const [bulkStatus, setBulkStatus] = useState<IncidentStatus | 'No change'>('No change')
   const [bulkImpact, setBulkImpact] = useState<ImpactLevel | 'No change'>('No change')
+  const shiftSelectRef = useRef(false)
 
   const allTopics = useMemo(() => getAllTopics(incidents), [incidents])
 
@@ -192,11 +193,6 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
       return next
     })
     setLastSelectedIncidentId(incidentId)
-  }
-
-  const handleCheckboxClick = (event: MouseEvent<HTMLButtonElement>, incidentId: string) => {
-    event.preventDefault()
-    toggleSelectIncident(incidentId, event.shiftKey)
   }
 
   const toggleSelectAll = () => {
@@ -412,7 +408,13 @@ export function IncidentsTable({ incidents, onEditIncident, onDeleteIncident, on
                   <TableCell>
                     <Checkbox
                       checked={selectedIncidents.has(incident.id)}
-                      onClick={(event) => handleCheckboxClick(event, incident.id)}
+                      onClick={(event) => {
+                        shiftSelectRef.current = event.shiftKey
+                      }}
+                      onCheckedChange={() => {
+                        toggleSelectIncident(incident.id, shiftSelectRef.current)
+                        shiftSelectRef.current = false
+                      }}
                       aria-label={`Select incident ${incident.problem}`}
                     />
                   </TableCell>

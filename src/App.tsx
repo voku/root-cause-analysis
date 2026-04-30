@@ -13,10 +13,24 @@ import type { Incident } from '@/lib/types'
 import { getUniqueValues, getAllRootCauses, getAllTopics, getRootCauseCounts } from '@/lib/data-utils'
 import { useLocalStorageState } from '@/hooks/use-local-storage-state'
 
+let fallbackIncidentIdCounter = 0
+
 function createIncidentId() {
-  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  const webCrypto = globalThis.crypto
+
+  if (webCrypto?.randomUUID) {
+    return webCrypto.randomUUID()
+  }
+
+  fallbackIncidentIdCounter += 1
+
+  if (webCrypto?.getRandomValues) {
+    const values = new Uint32Array(4)
+    webCrypto.getRandomValues(values)
+    return `${Date.now()}-${fallbackIncidentIdCounter}-${Array.from(values, (value) => value.toString(36)).join('')}`
+  }
+
+  return `${Date.now()}-${fallbackIncidentIdCounter}-${Math.random().toString(36).slice(2)}`
 }
 
 function App() {
