@@ -28,7 +28,7 @@ function App() {
   const deletedIncidentsRef = useRef<Incident[]>([])
   const undoToastIdRef = useRef<string | number | null>(null)
 
-  const safeIncidents = incidents || []
+  const safeIncidents = useMemo(() => incidents || [], [incidents])
 
   const existingProblems = useMemo(() => getUniqueValues(safeIncidents, 'problem'), [safeIncidents])
   const existingRootCauses = useMemo(() => getAllRootCauses(safeIncidents), [safeIncidents])
