@@ -3,18 +3,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Funnel, CaretUp, CaretDown } from '@phosphor-icons/react'
+import { Funnel, CaretUp, CaretDown, PencilSimple } from '@phosphor-icons/react'
 import type { Incident, ImpactLevel, IncidentStatus } from '@/lib/types'
 import { formatDate, getAllTopics } from '@/lib/data-utils'
 
 interface IncidentsTableProps {
   incidents: Incident[]
+  onEditIncident: (incident: Incident) => void
 }
 
 type SortField = 'createdAt' | 'problem' | 'impact' | 'status'
 type SortDirection = 'asc' | 'desc'
 
-export function IncidentsTable({ incidents }: IncidentsTableProps) {
+export function IncidentsTable({ incidents, onEditIncident }: IncidentsTableProps) {
   const [statusFilter, setStatusFilter] = useState<IncidentStatus | 'All'>('All')
   const [impactFilter, setImpactFilter] = useState<ImpactLevel | 'All'>('All')
   const [topicFilter, setTopicFilter] = useState<string>('All')
@@ -213,12 +214,13 @@ export function IncidentsTable({ incidents }: IncidentsTableProps) {
                 </div>
               </TableHead>
               <TableHead>Fix</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredAndSortedIncidents.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   No incidents found
                 </TableCell>
               </TableRow>
@@ -259,6 +261,16 @@ export function IncidentsTable({ incidents }: IncidentsTableProps) {
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {incident.fix || '-'}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => onEditIncident(incident)}
+                    >
+                      <PencilSimple className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))

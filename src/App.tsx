@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Toaster, toast } from 'sonner'
 import { Plus, ChartBar, Warning, ListBullets, Network } from '@phosphor-icons/react'
 import { QuickAddDialog } from '@/components/QuickAddDialog'
+import { EditIncidentDialog } from '@/components/EditIncidentDialog'
 import { Dashboard } from '@/components/Dashboard'
 import { IncidentsTable } from '@/components/IncidentsTable'
 import { RootCausesView } from '@/components/RootCausesView'
@@ -16,6 +17,8 @@ import { ulid } from 'ulid'
 function App() {
   const [incidents, setIncidents] = useKV<Incident[]>('rca-incidents', [])
   const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [incidentToEdit, setIncidentToEdit] = useState<Incident | null>(null)
 
   const safeIncidents = incidents || []
 
@@ -44,6 +47,22 @@ function App() {
     ])
     toast.success('Incident logged successfully', {
       description: `Problem: ${newIncident.problem}`,
+    })
+  }
+
+  const handleEditIncident = (incident: Incident) => {
+    setIncidentToEdit(incident)
+    setEditDialogOpen(true)
+  }
+
+  const handleUpdateIncident = (updatedIncident: Incident) => {
+    setIncidents((current) =>
+      (current || []).map((inc) =>
+        inc.id === updatedIncident.id ? updatedIncident : inc
+      )
+    )
+    toast.success('Incident updated successfully', {
+      description: `Problem: ${updatedIncident.problem}`,
     })
   }
 
@@ -94,7 +113,7 @@ function App() {
           </TabsContent>
 
           <TabsContent value="problems">
-            <IncidentsTable incidents={safeIncidents} />
+            <IncidentsTable incidents={safeIncidents} onEditIncident={handleEditIncident} />
           </TabsContent>
 
           <TabsContent value="root-causes">
@@ -111,6 +130,18 @@ function App() {
         open={quickAddOpen}
         onOpenChange={setQuickAddOpen}
         onSave={handleSaveIncident}
+        existingProblems={existingProblems}
+        existingRootCauses={existingRootCauses}
+        existingTopics={existingTopics}
+        existingFixes={existingFixes}
+        rootCauseCounts={rootCauseCounts}
+      />
+
+      <EditIncidentDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={handleUpdateIncident}
+        incident={incidentToEdit}
         existingProblems={existingProblems}
         existingRootCauses={existingRootCauses}
         existingTopics={existingTopics}
