@@ -11,6 +11,7 @@ import { RootCausesView } from '@/components/RootCausesView'
 import { RootCauseGraph } from '@/components/RootCauseGraph'
 import type { Incident } from '@/lib/types'
 import { getUniqueValues, getAllRootCauses, getAllTopics, getRootCauseCounts } from '@/lib/data-utils'
+import { createExampleIncidents } from '@/lib/example-incidents'
 import { useLocalStorageState } from '@/hooks/use-local-storage-state'
 
 const createIncidentId = (() => {
@@ -50,8 +51,10 @@ const createIncidentId = (() => {
   }
 })()
 
+const initialDemoIncidents = createExampleIncidents()
+
 function App() {
-  const [incidents, setIncidents] = useLocalStorageState<Incident[]>('rca-incidents', [])
+  const [incidents, setIncidents] = useLocalStorageState<Incident[]>('rca-incidents', initialDemoIncidents)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [incidentToEdit, setIncidentToEdit] = useState<Incident | null>(null)
