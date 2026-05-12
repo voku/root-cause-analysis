@@ -2,9 +2,18 @@ import type { Incident } from './types'
 
 function createRelativeTimestamp(daysAgo: number, hour: number, minute: number) {
   const date = new Date()
-  date.setDate(date.getDate() - daysAgo)
-  date.setHours(hour, minute, 0, 0)
-  return date.toISOString()
+  date.setUTCDate(date.getUTCDate() - daysAgo)
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      hour,
+      minute,
+      0,
+      0
+    )
+  ).toISOString()
 }
 
 export function createExampleIncidents(): Incident[] {
