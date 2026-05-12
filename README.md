@@ -70,7 +70,9 @@ The Vite config uses `/root-cause-analysis/` as the base path only when `GITHUB_
 
 ## Data Storage
 
-Incidents are stored in the user's browser `localStorage` under the `rca-incidents` key. This keeps the app fully static and deployable without a backend. For team-wide production data, connect the incident state layer to an API or database and keep the UI components unchanged.
+Incidents are stored in the user's browser `localStorage` under the `rca-incidents` key. First-time visitors start with a bundled demo dataset so the dashboard, table, and graph are immediately populated on GitHub Pages. Once the app is used, that browser-specific data is preserved locally and is not overwritten.
+
+This keeps the app fully static and deployable without a backend. For team-wide production data, connect the incident state layer to an API or database and keep the UI components unchanged.
 
 ## How the App Works Today
 
