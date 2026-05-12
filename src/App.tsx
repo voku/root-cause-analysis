@@ -51,9 +51,10 @@ const createIncidentId = (() => {
   }
 })()
 
+const initialDemoIncidents = createExampleIncidents()
+
 function App() {
-  const demoIncidents = useMemo(() => createExampleIncidents(), [])
-  const [incidents, setIncidents] = useLocalStorageState<Incident[]>('rca-incidents', demoIncidents)
+  const [incidents, setIncidents] = useLocalStorageState<Incident[]>('rca-incidents', initialDemoIncidents)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [incidentToEdit, setIncidentToEdit] = useState<Incident | null>(null)
