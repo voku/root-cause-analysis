@@ -24,6 +24,8 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Static checks
         run: npm run lint
+      - name: Exercise D3 graph and timeline primitives
+        run: node --test tests/d3-graph-smoke.test.mjs
       - name: Production build
         run: npm run build
       - name: Verify output
